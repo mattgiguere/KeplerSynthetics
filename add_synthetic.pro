@@ -10,11 +10,11 @@ phase=phase, $
 hd209458=hd209458, $
 output=output, $
 timebaseline=timebaseline, $
-postplot=postplot, $
-dontstop=dontstop
+postplot=postplot
 
 ;PURPOSE: To restore the kepler data, add a synthetic
-;	transit signal, and plot the result. 
+;	transit signal, save the result to a FITS file and
+;	optionally plot the synthetic LC. 
 ;
 ;INPUT:
 ;	fname: the filename
@@ -30,29 +30,16 @@ dontstop=dontstop
 ;OPTIONAL INPUT:
 ;	phase: changes the start point of the curve (0 - 1)
 ;	hd209458: uses this system to test the output values
-;	postplot: generate eps and png files of the LOSC
-;		and BLS periodograms that go in the /exolib/kepler
-;		directory.
-;  dontstop: use this keyword if you want to do some
-;		overplotting calling from an external procedure
 ;
 ;OPTIONAL OUTPUT:
 ;	output: the normalized lightcurve
 ;
 ; c. 2010.09.06 ~MJG
-
-;ps_open, 'kep_syns', /encaps
-;!p.multi=[0,2,2]
+; 2014.07.10 ~MJG heavily modified to work with latest lightcurves
 
 REARTH = 6.371d6 ;meters
-
-;2 earth
-if ~keyword_set(fname) then fname='kplr006508291-2009166043257_llc.fits'
-if ~keyword_set(dontstop) then dontstop = 0d
-;1 earth
-;if ~keyword_set(fname) then fname='kplr004753224-2009166043257_llc.fits'
-;4 earth
-;if ~keyword_set(fname) then fname='kplr006224313-2009166043257_llc.fits'
+loadct, 39, /silent
+plotdir = '/raw/kepler/synplots/'
 
 res = readKeplerLC(fname=fname, header=header, head0=head0)
 nelres = n_elements(res)
@@ -89,7 +76,7 @@ endfor
 bnndout /= max(bnndout)
 
 if keyword_set(postplot) then begin
-postnamesyn = nextnameeps('synthetics', /nosuf)
+postnamesyn = nextnameeps(plotdir+'synthetics', /nosuf)
 ps_open, postnamesyn, /encaps
 endif
 plot, res.time, bnndout, $
@@ -105,7 +92,7 @@ kepflux = res.pdcsap_flux
 normkepflux = kepflux/max(kepflux)
 
 if keyword_set(postplot) then begin
-postname = nextnameeps('syntheticsorig', /nosuf)
+postname = nextnameeps(plotdir+'syntheticsorig', /nosuf)
 ps_open, postname, /encaps
 endif
 
@@ -136,7 +123,7 @@ normkepflux = kepflux/median(kepflux)
 if keyword_set(postplot) then begin
 !p.charthick=3
 !p.thick=3
-postname = nextnameeps('syntheticssig', /nosuf)
+postname = nextnameeps(plotdir+'syntheticssig', /nosuf)
 ps_open, postname, /encaps
 endif
 
@@ -175,7 +162,7 @@ fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
 fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
 fxaddpar, head0, 'PLPER', strt(per, f='(F10.3)'), 'Synthetic planet period (days)'
 fxaddpar, head0, 'PLPHASE', strt(phase, f='(F10.4)'), 'Transit phase'
-fxaddpar, head0, 'TRANELS', 
+fxaddpar, head0, 'TRANELS', '5:10', 'Pixels with 1st transit event'
 				
 mwrfits, res0, fitsnm, head0, /create
 mwrfits, synth_struct, fitsnm, header
