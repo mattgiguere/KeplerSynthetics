@@ -54,13 +54,14 @@ if ~keyword_set(dontstop) then dontstop = 0d
 ;4 earth
 ;if ~keyword_set(fname) then fname='kplr006224313-2009166043257_llc.fits'
 
-res = read_kepler(fname=fname, header=header)
+res = readKeplerLC(fname=fname, header=header, head0=head0)
 nelres = n_elements(res)
 print, '# el in res is: ', nelres
 
-rst = sxpar(header, 'RADIUS')
+rpl_init = rpl
+rst = sxpar(head0, 'RADIUS')
 print, 'rst is: ', rst
-;stop
+stop
 timebaseline=nelres*30d
 
 ;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
@@ -77,8 +78,6 @@ output=output, $
 timebaseline=timebaseline
 
 
-;stop
-
 bnndout = dblarr(nelres)
 ;this will bin the gen_synthetic output to be the same 
 ;length as the 20 minute kepler observations:
@@ -93,15 +92,16 @@ if keyword_set(postplot) then begin
 postnamesyn = nextnameeps('synthetics', /nosuf)
 ps_open, postnamesyn, /encaps
 endif
-plot, res.barytime, bnndout, $
-xtitle='Barytime', $
+plot, res.time, bnndout, $
+xtitle='Time', $
 ytitle='Normalized Flux', /yst, $
 yra=[min(bnndout)^2d, 1], ps=8
 if keyword_set(postplot) then begin
 ps_close
 endif
+;stop
 
-kepflux = res.ap_corr_flux
+kepflux = res.pdcsap_flux
 normkepflux = kepflux/max(kepflux)
 
 if keyword_set(postplot) then begin
@@ -109,12 +109,12 @@ postname = nextnameeps('syntheticsorig', /nosuf)
 ps_open, postname, /encaps
 endif
 
-timearr = res.barytime - min(res.barytime)
+timearr = res.time - min(res.time)
 plot, timearr, normkepflux, ps=8, $
 xtitle = 'Days from Beginning of Quarter', $
-ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d], symsize=0.25
+ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d], symsize=0.25, /xsty
 
-normerr = res.ap_corr_err/max(kepflux)
+normerr = res.pdcsap_flux_err/max(kepflux)
 ;oploterr, timearr, normkepflux, normerr, 3
 errplot, timearr, normkepflux - normerr, $
 normkepflux + normerr, color=200
@@ -130,15 +130,17 @@ kepflux *= bnndout
 normkepflux = kepflux/median(kepflux)
 
 ;stop
-!p.charthick=3
-!p.thick=3
+!p.charthick=1
+!p.thick=1
 
 if keyword_set(postplot) then begin
+!p.charthick=3
+!p.thick=3
 postname = nextnameeps('syntheticssig', /nosuf)
 ps_open, postname, /encaps
 endif
 
-timearr = res.barytime - min(res.barytime)
+timearr = res.time - min(res.time)
 plot, timearr, normkepflux, ps=8, $
 xtitle = 'Days from Beginning of Quarter', $
 ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d], symsize=0.25
@@ -147,7 +149,7 @@ errplot, timearr, normkepflux - normerr, $
 normkepflux + normerr, color=200
 oplot, timearr, normkepflux, ps=8
 xyouts, 0.2, 0.14, 'period (days)= '+ $
-strt(per*29.426d/30d, f='(F4.1)'), /norm
+strt(per*29.426d/30d, f='(F8.2)'), /norm
 xyouts, 0.2, 0.17, 'radius (in R_earth): '+ $
 strt(rpl/REARTH, f='(F4.1)'), /norm
 
@@ -155,51 +157,27 @@ if keyword_set(postplot) then begin
 ps_close
 endif
 
-keplerBLS, timearr=timearr, fluxarr=normkepflux, $
-postplot=postplot, filename=fname
 
+head0o = head0
+h0el = n_elements(head0)
+head0 = [head0o[0:(h0el - 2)], $
+head0o[h0el-1]]
 
-;save, filename='kepler4earth.dat', timearr, normkepflux, normerr
+;filename with no directory:
+fnamesplit = strsplit(fname, '/', /extract)
+fnamend = fnamesplit[-1]
+print, fnamend
+fnamenofits = strmid(fnamend, 0, strlen(fnamend)-5)
+fdir = '/raw/kepler/synthetics/'
+fitsnm = fdir+fnamenofits+'_syn.fits'
 
-binkepler, timearr, normkepflux, newspline
+fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
+fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
+fxaddpar, head0, 'PLPER', strt(per, f='(F10.3)'), 'Synthetic planet period (days)'
+fxaddpar, head0, 'PLPHASE', strt(phase, f='(F10.4)'), 'Transit phase'
+fxaddpar, head0, 'TRANELS', 
+				
+mwrfits, res0, fitsnm, head0, /create
+mwrfits, synth_struct, fitsnm, header
 
-if keyword_set(postplot) then begin
-postname = nextnameeps('syntheticspline', /nosuf)
-ps_open, postname, /encaps
-endif
-
-plot, timearr, newspline, ps=8, $
-xtitle='Days from Beginning of Quarter', $
-ytitle='Normalized Flux'
-errplot, timearr, newspline - normerr, newspline + normerr, color=200
-oplot, timearr, newspline, ps=8
-
-if keyword_set(postplot) then begin
-ps_close
-endif
-
-window, /free
-keplerBLS, timearr=timearr, fluxarr=newspline, $
-postplot=postplot, filename=fname
-
-
-if keyword_set(postplot) then begin
-postname = nextnameeps('syntheticlosc', /nosuf)
-ps_open, postname, /encaps
-endif
-
-cf = create_struct('jd', timearr, 'mnvel', kepflux)
-pergram, cf, nu_out, peri_out, lowper=0.04d, /noplot
-title='Lomb Scargle Periodogram';of '+knum
-yra = [-0.01,1.2*max(peri_out)]
-xra = [0.8*min(1./nu_out),1.01*max(1./nu_out)]
-plot,(1./nu_out),peri_out,xtitl='!6 Period (d)', $
-/xlog,yr=yra,xr=xra, $
-/xsty,/ysty,titl='!6'+title,ytitl='!6 Power'
-
-if keyword_set(postplot) then begin
-ps_close
-endif
-
-stop
 end add_synthetic.pro
