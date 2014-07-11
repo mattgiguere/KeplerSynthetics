@@ -11,7 +11,7 @@ phase=phase, $
 hd209458=hd209458, $
 output=output, $
 timebaseline=timebaseline, $
-incompletetransit=incompletetransit
+ncmplttrnst=ncmplttrnst
 ;PURPOSE: TO generate a synthetic transit signal to Kepler data. 
 ;
 ;INPUT:
@@ -33,7 +33,7 @@ incompletetransit=incompletetransit
 ;
 ;	hd209458: uses this system to test the output values
 ;
-;	INCOMPLETETRANSIT: set this if you do NOT care if at least 1 
+;	ncmplttrnst: set this if you do NOT care if at least 1 
 ;	complete transit will be within the lightcurve. NOT setting 
 ;	this puts a further constraint on the. For example
 ;	if your transit is one hour long and you only have ten hours of
