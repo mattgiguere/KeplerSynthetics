@@ -43,7 +43,8 @@ rsun = 6.955d8
 ;rpl_e: the radius of the planet [in R_Earth]
 ;per_d: the orbital period [in days]
 ;phase: the phase of the orbit
-readcol, 'phexample.csv', filenm, rpl_e, per_d, phase, format='A, D, D, D', delim=','
+readcol, 'unitTests.csv', filenm, rpl_e, per_d, phase, $
+	format='A, D, D, D', delim=',', skipline=1
 
 ;printt, filenm
 
