@@ -63,9 +63,6 @@ nelres = n_elements(res)
 
 ;the time (in minutes) between observations:
 timestep = (max(res.time) - min(res.time))/nelres * 24d * 60d
-print, 'nelres: ', nelres
-print, 'timestep: ', timestep
-stop
 
 ;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
 gen_synthetic, $
@@ -85,11 +82,9 @@ nbnndout = dblarr(nelres)
 ;this will bin the gen_synthetic output to be the same 
 ;length as the ~29.4 minute kepler observations:
 for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1)*timestep)-1L])/(floor((i+1)*timestep) - floor(i*timestep))
-stop
 
 ;now to list the spots where the transit occurs:
 lowspots = where(nbnndout lt 0.9999999d)
-stop
 
 if keyword_set(postplot) then begin
 postnamesyn = nextnameeps(plotdir+'synthetics', /nosuf)
