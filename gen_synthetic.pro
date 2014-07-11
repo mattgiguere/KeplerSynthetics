@@ -10,7 +10,8 @@ mst=mst, $
 phase=phase, $
 hd209458=hd209458, $
 output=output, $
-timebaseline=timebaseline
+timebaseline=timebaseline, $
+incompletetransit=incompletetransit
 ;PURPOSE: TO generate a synthetic transit signal to Kepler data. 
 ;
 ;INPUT:
@@ -25,8 +26,19 @@ timebaseline=timebaseline
 ;		data to calculate the synthetic lightcurve for
 ;
 ;OPTIONAL INPUT:
-;	phase: changes the start point of the curve (0 - 1)
+;	phase: changes the start point of the curve (0 - 1). WARNING! If
+;		you set the phase exactly to zero IDL think you did NOT
+;		set the keyword and will reassign the phase to a uniform
+;		random number between 0 and 1.
+;
 ;	hd209458: uses this system to test the output values
+;
+;	INCOMPLETETRANSIT: set this if you do NOT care if at least 1 
+;	complete transit will be within the lightcurve. NOT setting 
+;	this puts a further constraint on the. For example
+;	if your transit is one hour long and you only have ten hours of
+;	data, NOT setting the incompletetransit will make the phase no greater
+;	than 0.9.
 ;
 ;OPTIONAL OUTPUT:
 ;	output: the normalized lightcurve
@@ -41,7 +53,7 @@ if ~keyword_set(inc) then inc = 90d
 if ~keyword_set(limbd) then limbd=0.6d
 if ~keyword_set(mpl) then mpl = 1d
 if ~keyword_set(mst) then mst = 1d
-if ~keyword_set(phase) then phase=0d
+if ~keyword_set(phase) then phase = randomu(seed)
 
 print, 'rpl is: ', rpl
 print, 'rst is: ', rst
@@ -49,14 +61,6 @@ print, 'per is: ', per
 print, 'mpl is: ', mpl
 print, 'mst is: ', mst
 print, 'inc is: ', inc
-
-
-
-if ~keyword_set(phase) then begin
-	randarr = randomn(42, 1d3, /norm)
-	randarr /= max(randarr)
-	phase = randarr[0]
-endif
 print, 'phase is: ', phase
 
 ;test with the 209458 values:
@@ -115,6 +119,16 @@ leftwing=1d -  depth*dindgen(nelwing+1d)/nelwing
 rightwing = (1d - depth) + depth*dindgen(nelwing+1d)/nelwing
 trnstcrv = [leftwing, dblarr(t_com/60) + (1d - depth), rightwing]
 neltrnst = n_elements(trnstcrv)
+
+;check to make sure complete transit fits
+;within the lightcruve:
+if ~keyword_set(incompletetransit) then begin
+	fraction = neltrnst / (psecs/60d)
+	if phase gt (1d - fraction) then phase = (1d - fraction)
+	
+	print, 'New Phase is: ', phase
+endif;KW(incompletetransit)
+
 start=phase*psecs/60d
 
 ;now loop over adding repeated transit events:
