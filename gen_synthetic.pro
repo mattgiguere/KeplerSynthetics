@@ -126,6 +126,11 @@ if ~keyword_set(incompletetransit) then begin
 	fraction = neltrnst / (psecs/60d)
 	if phase gt (1d - fraction) then phase = (1d - fraction)
 	
+	;now to handle long-period events and ensure the transit
+	;falls within the lightcurve:
+	if phase*psecs/60 gt nelwhole-neltrnst then $
+		phase = (nelwhole - neltrnst)/(psecs/60d)*randomu(seed)
+	
 	print, 'New Phase is: ', phase
 endif;KW(incompletetransit)
 
