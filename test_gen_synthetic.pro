@@ -32,7 +32,8 @@
 ;-
 pro test_gen_synthetic, $
 help = help, $
-postplot = postplot
+postplot = postplot, $
+tcase = tcase
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 !p.color=0
@@ -40,12 +41,14 @@ angstrom = '!6!sA!r!u!9 %!6!n'
 loadct, 39, /silent
 usersymbol, 'circle', /fill, size_of_sym = 0.5
 
+if ~keyword_set(tcase) then tcase = 0
 nelres = 1470L
 timestep = 29.405511d
 
 ;************************************************
 ; TEST 1: PHASE NEAR ZERO
 ;************************************************
+if tcase le 1 then begin
 print, "first test 0 phase (transit happens at the beginning):""
 gen_synthetic, rpl=4.2, rst=1.01, per=3.5, phase=1d-5, timebaseline = 43226.101, output=output
 
@@ -61,10 +64,11 @@ for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1
 plot, nbnndout, ps=8, /ysty, yran=[0.9999*min(nbnndout), 1.0001*max(nbnndout)]
 print, 'Binned phase should be near zero.'
 stop
-
+endif;tcase
 ;************************************************
 ; TEST 2: PHASE 0.5
 ;************************************************
+if tcase le 2 then begin
 print, "first test 0 phase (transit happens at the beginning):""
 gen_synthetic, rpl=4.2, rst=1.01, per=3.5, phase=0.5, timebaseline = 43226.101, output=output
 
@@ -80,10 +84,12 @@ for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1
 plot, nbnndout, ps=8, /ysty, yran=[0.9999*min(nbnndout), 1.0001*max(nbnndout)]
 print, 'Binned phase should be 0.5.'
 stop
+endif;tcase
 
 ;************************************************
 ; TEST 3: PHASE 1.0
 ;************************************************
+if tcase le 3 then begin
 print, "first test 0 phase (transit happens at the beginning):""
 gen_synthetic, rpl=4.2, rst=1.01, per=3.5, phase=1.0, timebaseline = 43226.101, output=output
 
@@ -98,11 +104,13 @@ for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1
 plot, nbnndout, ps=8, /ysty, yran=[0.9999*min(nbnndout), 1.0001*max(nbnndout)]
 print, 'Binned phase should be near 1.'
 stop
+endif;tcase
 
 
 ;************************************************
 ; TEST 4: LONG PERIOD WITH HIGH PHASE
 ;************************************************
+if tcase le 4 then begin
 print, "first test 0 phase (transit happens at the beginning):""
 gen_synthetic, rpl=4.2, rst=1.01, per=350d, phase=.95, timebaseline = 43226.101, output=output
 
@@ -118,6 +126,7 @@ for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1
 plot, nbnndout, ps=8, /ysty, yran=[0.9999*min(nbnndout), 1.0001*max(nbnndout)]
 print, 'Binned phase should be zero.'
 stop
+endif;tcase
 
 
 end;test_gen_synthetic.pro 
