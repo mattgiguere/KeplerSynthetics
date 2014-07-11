@@ -48,8 +48,18 @@ print, '# el in res is: ', nelres
 rpl_init = rpl
 rst = sxpar(head0, 'RADIUS')
 print, 'rst is: ', rst
+rndmamp = max(res.time) - min(res.time) - 30d
+starttime = rndmamp * randomu(seed)
+startel = where(res.time gt starttime + min(res.time))
+startel = startel[0]
+endel = where(res.time ge res[startel].time + 30d)
+endel = endel[0]
+;figure out the timebaseline (in minutes) to feed to gen_synthetic:
+timebaseline= (res[endel].time - res[startel].time)*24d * 60d
+
+;now chop the "res" structure for the remainder of this program:
+res = res[startel:endel]
 stop
-timebaseline=nelres*30d
 
 ;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
 gen_synthetic, $
@@ -67,7 +77,7 @@ timebaseline=timebaseline
 
 bnndout = dblarr(nelres)
 ;this will bin the gen_synthetic output to be the same 
-;length as the 20 minute kepler observations:
+;length as the 30 minute kepler observations:
 for i=0LL, nelres-1d do begin
 bnndout[i] = total(output[i*30d: (i*30d + 29d)])
 endfor
