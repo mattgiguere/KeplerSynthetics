@@ -41,7 +41,7 @@ REARTH = 6.371d6 ;meters
 loadct, 39, /silent
 plotdir = '/raw/kepler/synplots/'
 
-res = readKeplerLC(fname=fname, header=header, head0=head0)
+res = readKeplerLC(fname=fname, header=header, head0=head0, /noplot)
 nelres = n_elements(res)
 print, '# el in res is: ', nelres
 
@@ -59,7 +59,11 @@ timebaseline= (res[endel].time - res[startel].time)*24d * 60d
 
 ;now chop the "res" structure for the remainder of this program:
 res = res[startel:endel]
-stop
+nelres = n_elements(res)
+
+;the time (in minutes) between observations:
+timestep = (max(res.time) - min(res.time))/nelres * 24d * 60d
+;stop
 
 ;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
 gen_synthetic, $
@@ -75,28 +79,30 @@ output=output, $
 timebaseline=timebaseline
 
 
-bnndout = dblarr(nelres)
+nbnndout = dblarr(nelres)
 ;this will bin the gen_synthetic output to be the same 
 ;length as the 30 minute kepler observations:
-for i=0LL, nelres-1d do begin
-bnndout[i] = total(output[i*30d: (i*30d + 29d)])
-endfor
+for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1)*timestep)-1L])/(floor((i+1)*timestep) - floor(i*timestep))
+;endfor
 
-;now to normalize:
-bnndout /= max(bnndout)
+;now to list the spots where the transit occurs:
+lowspots = where(nbnndout lt 0.9999999d)
+stop
 
 if keyword_set(postplot) then begin
 postnamesyn = nextnameeps(plotdir+'synthetics', /nosuf)
 ps_open, postnamesyn, /encaps
 endif
-plot, res.time, bnndout, $
-xtitle='Time', $
+plot, res.time, nbnndout, $
+xtitle='Time', /xsty, $
 ytitle='Normalized Flux', /yst, $
-yra=[min(bnndout)^2d, 1], ps=8
+yra=[min(nbnndout)^2d, 1], ps=8
+
+oplot, res[lowspots].time, nbnndout[lowspots], ps=8, col=250
 if keyword_set(postplot) then begin
 ps_close
 endif
-;stop
+stop
 
 kepflux = res.pdcsap_flux
 normkepflux = kepflux/max(kepflux)
@@ -122,7 +128,9 @@ if keyword_set(postplot) then begin
 ps_close
 endif
 
-kepflux *= bnndout
+stop
+
+kepflux *= nbnndout
 
 normkepflux = kepflux/median(kepflux)
 
@@ -138,22 +146,29 @@ ps_open, postname, /encaps
 endif
 
 timearr = res.time - min(res.time)
-plot, timearr, normkepflux, ps=8, $
+plot, timearr, normkepflux, ps=8, /xsty, $
 xtitle = 'Days from Beginning of Quarter', $
-ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d], symsize=0.25
+ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d*max(normkepflux)], symsize=0.25
 ;oploterr, timearr, normkepflux, normerr, 3
-errplot, timearr, normkepflux - normerr, $
-normkepflux + normerr, color=200
+oploterr, timearr, normkepflux, normerr, 8
 oplot, timearr, normkepflux, ps=8
-xyouts, 0.2, 0.14, 'period (days)= '+ $
-strt(per*29.426d/30d, f='(F8.2)'), /norm
+
 xyouts, 0.2, 0.17, 'radius (in R_earth): '+ $
 strt(rpl/REARTH, f='(F4.1)'), /norm
+
+xyouts, 0.2, 0.14, 'period (days): '+ $
+strt(per*29.426d/30d, f='(F8.2)'), /norm
+
+xyouts, 0.2, 0.11, 'phase: '+ $
+strt(phase, f='(F8.2)'), /norm
+
+
+oplot, timearr[lowspots], normkepflux[lowspots], ps=8, col=250
 
 if keyword_set(postplot) then begin
 ps_close
 endif
-
+stop
 
 head0o = head0
 h0el = n_elements(head0)
