@@ -21,7 +21,7 @@ timebaseline=timebaseline
 ;  LIMBD: the limb darkening factor. 
 ;	Mpl: the mass of the planet (in earth masses)
 ;	Mst: the mass of the star (in solar masses)
-;	timebaseline: The timebaseline of the Kepler
+;	timebaseline: The timebaseline (in minutes) of the Kepler
 ;		data to calculate the synthetic lightcurve for
 ;
 ;OPTIONAL INPUT:
@@ -52,10 +52,11 @@ print, 'inc is: ', inc
 
 
 
-
-randarr = randomn(42, 1d3, /norm)
-randarr /= max(randarr)
-phase = randarr[0]
+if ~keyword_set(phase) then begin
+	randarr = randomn(42, 1d3, /norm)
+	randarr /= max(randarr)
+	phase = randarr[0]
+endif
 print, 'phase is: ', phase
 
 ;test with the 209458 values:
@@ -116,6 +117,7 @@ trnstcrv = [leftwing, dblarr(t_com/60) + (1d - depth), rightwing]
 neltrnst = n_elements(trnstcrv)
 start=phase*psecs/60d
 
+;now loop over adding repeated transit events:
 while start lt nelwhole do begin
   flux[start:(start + neltrnst-1)] *= trnstcrv
   start += psecs/60d
