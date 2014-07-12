@@ -38,6 +38,8 @@ postplot=postplot
 ; 2014.07.10 ~MJG heavily modified to work with latest lightcurves
 
 REARTH = 6.371d6 ;meters
+RSUN = 6.955d8 ;meters
+
 loadct, 39, /silent
 plotdir = '/raw/kepler/synplots/'
 
@@ -84,11 +86,23 @@ nbnndout = dblarr(nelres)
 for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1)*timestep)-1L])/(floor((i+1)*timestep) - floor(i*timestep))
 
 ;now to list the spots where the transit occurs:
-lowspots = where(nbnndout lt 0.9999999d)
+lowspots = where(nbnndout lt 1d)
+beglow = lowspots[0]
+
+;find the final element of the 1st transit:
+il = 1
+while (il lt n_elements(lowspots)-1) and (lowspots[il]-1L eq lowspots[il-1]) do begin
+il++
+endwhile
+print, 'lowspots[il]: ', lowspots[il]
+print, 'lowspots[il-1L]: ', lowspots[il-1L]
+endlow = lowspots[il-1L]
 
 if keyword_set(postplot) then begin
-postnamesyn = nextnameeps(plotdir+'synthetics', /nosuf)
-ps_open, postnamesyn, /encaps
+	!p.charthick=3
+	!p.thick=3
+	postnamesyn = nextnameeps(plotdir+'JustSynthetics', /nosuf)
+	ps_open, postnamesyn, /encaps, /col
 endif
 plot, res.time, nbnndout, $
 xtitle='Time', /xsty, $
@@ -97,16 +111,15 @@ yra=[min(nbnndout)^2d, 1], ps=8
 
 oplot, res[lowspots].time, nbnndout[lowspots], ps=8, col=250
 if keyword_set(postplot) then begin
-ps_close
+	ps_close
 endif
-stop
 
 kepflux = res.pdcsap_flux
 normkepflux = kepflux/max(kepflux)
 
 if keyword_set(postplot) then begin
-postname = nextnameeps(plotdir+'syntheticsorig', /nosuf)
-ps_open, postname, /encaps
+	postname = nextnameeps(plotdir+'JustLC', /nosuf)
+	ps_open, postname, /encaps, /color
 endif
 
 timearr = res.time - min(res.time)
@@ -122,10 +135,8 @@ normkepflux + normerr, color=200
 oplot, timearr, normkepflux, ps=8
 
 if keyword_set(postplot) then begin
-ps_close
+	ps_close
 endif
-
-stop
 
 kepflux *= nbnndout
 
@@ -136,10 +147,8 @@ normkepflux = kepflux/median(kepflux)
 !p.thick=1
 
 if keyword_set(postplot) then begin
-!p.charthick=3
-!p.thick=3
-postname = nextnameeps(plotdir+'syntheticssig', /nosuf)
-ps_open, postname, /encaps
+	postname = nextnameeps(plotdir+'SyntheticsAndLC', /nosuf)
+	ps_open, postname, /encaps, /color
 endif
 
 timearr = res.time - min(res.time)
@@ -150,11 +159,14 @@ ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d*max(normk
 oploterr, timearr, normkepflux, normerr, 8
 oplot, timearr, normkepflux, ps=8
 
-xyouts, 0.2, 0.17, 'radius (in R_earth): '+ $
+xyouts, 0.2, 0.2, 'R_st (in R_sun): '+ $
+strt(rst/rsun, f='(F5.2)'), /norm
+
+xyouts, 0.2, 0.17, 'radius_pl (in R_earth): '+ $
 strt(rpl/REARTH, f='(F4.1)'), /norm
 
 xyouts, 0.2, 0.14, 'period (days): '+ $
-strt(per*29.426d/30d, f='(F8.2)'), /norm
+strt(per, f='(F8.2)'), /norm
 
 xyouts, 0.2, 0.11, 'phase: '+ $
 strt(phase, f='(F8.2)'), /norm
@@ -163,9 +175,8 @@ strt(phase, f='(F8.2)'), /norm
 oplot, timearr[lowspots], normkepflux[lowspots], ps=8, col=250
 
 if keyword_set(postplot) then begin
-ps_close
+	ps_close
 endif
-stop
 
 head0o = head0
 h0el = n_elements(head0)
@@ -184,7 +195,7 @@ fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
 fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
 fxaddpar, head0, 'PLPER', strt(per, f='(F10.3)'), 'Synthetic planet period (days)'
 fxaddpar, head0, 'PLPHASE', strt(phase, f='(F10.4)'), 'Transit phase'
-fxaddpar, head0, 'TRANELS', '5:10', 'Pixels with 1st transit event'
+fxaddpar, head0, 'TRANELS', strt(beglow)+':'+strt(endlow), 'Elements with 1st transit event'
 				
 mwrfits, res0, fitsnm, head0, /create
 mwrfits, synth_struct, fitsnm, header
