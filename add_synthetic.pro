@@ -189,7 +189,7 @@ fnamend = fnamesplit[-1]
 print, fnamend
 fnamenofits = strmid(fnamend, 0, strlen(fnamend)-5)
 fdir = '/raw/kepler/synthetics/'
-fitsnm = fdir+fnamenofits+'_syn.fits'
+fitsnm = nextname(fdir+'synthetic','.fits')
 
 fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
 fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
