@@ -58,7 +58,7 @@ decade=decade, $
 firstfour=firstfour
 
 if keyword_set(firstfour) then begin
-	ff = strt(firstfour)
+	ff = strt(firstfour, f='(I04)')
 	spawn, "wget -nH --cut-dirs=4 --directory-prefix=/raw/kepler/lightcurves/"+ff+"/ -r -l0 -c -N -np -R 'index*' -erobots=off http://archive.stsci.edu/pub/kepler/lightcurves/"+ff+"/"
 endif;KW(firstfour)
 
