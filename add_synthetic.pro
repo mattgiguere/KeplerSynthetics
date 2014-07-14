@@ -50,44 +50,81 @@ print, '# el in res is: ', nelres
 rpl_init = rpl
 rst = sxpar(head0, 'RADIUS')
 print, 'rst is: ', rst
+print, 'phase is: ', phase
 rndmamp = max(res.time) - min(res.time) - 30d
-starttime = rndmamp * randomu(seed)
-startel = where(res.time gt starttime + min(res.time))
-startel = startel[0]
-endel = where(res.time ge res[startel].time + 30d)
-endel = endel[0]
-;figure out the timebaseline (in minutes) to feed to gen_synthetic:
-timebaseline= (res[endel].time - res[startel].time)*24d * 60d
+res_original = res
+rpl_original = rpl
+rst_original = rst
 
-;now chop the "res" structure for the remainder of this program:
-res = res[startel:endel]
-nelres = n_elements(res)
+gaptrial = 0
+repeat begin
+	print, 'Gap trial is now: ', gaptrial
+	;reset the input parameters:
+	res = res_original
+	rpl = rpl_original
+	rst = rst_original
+	;now choose a new random starting time:
+	starttime = rndmamp * randomu(seed)
+	print, 'starttime is: ', starttime
+	startel = where(res.time gt starttime + min(res.time))
+	startel = startel[0]
+	endel = where(res.time ge res[startel].time + 30d)
+	endel = endel[0]
+	;figure out the timebaseline (in minutes) to feed to gen_synthetic:
+	timebaseline= (res[endel].time - res[startel].time)*24d * 60d
 
-;the time (in minutes) between observations:
-timestep = (max(res.time) - min(res.time))/nelres * 24d * 60d
+	;now chop the "res" structure for the remainder of this program:
+	res = res[startel:endel]
+	nelres = n_elements(res)
 
-;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
-gen_synthetic, $
-rpl=rpl, $
-rst=rst, $
-per=per, $
-inc=inc, $
-mpl=mpl, $
-mst=mst, $
-phase=phase, $
-hd209458=hd209458, $
-output=output, $
-timebaseline=timebaseline
+	;the time (in minutes) between observations:
+	timestep = (max(res.time) - min(res.time))/nelres * 24d * 60d
+
+	;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
+	gen_synthetic, $
+	rpl=rpl, $
+	rst=rst, $
+	per=per, $
+	phase=phase, $
+	output=output, $
+	timebaseline=timebaseline
 
 
-nbnndout = dblarr(nelres)
-;this will bin the gen_synthetic output to be the same 
-;length as the ~29.4 minute kepler observations:
-for i=0LL, nelres-1d do nbnndout[i] = total(output[floor(i*timestep): floor((i+1)*timestep)-1L])/(floor((i+1)*timestep) - floor(i*timestep))
+	nbnndout = dblarr(nelres)
+	;this will bin the gen_synthetic output to be the same 
+	;length as the ~29.4 minute kepler observations:
+	for i=0LL, nelres-1d do begin 
+	nbnndout[i] = total(output[floor(i*timestep): floor((i+1)*timestep)-1L])/(floor((i+1)*timestep) - floor(i*timestep))
+	endfor
 
-;now to list the spots where the transit occurs:
-lowspots = where(nbnndout lt 1d)
-beglow = lowspots[0]
+	;now to list the spots where the transit occurs:
+	lowspots = where(nbnndout lt 1d)
+	beglow = lowspots[0]
+	lowarr = nbnndout lt 1d
+
+	kepflux = res.pdcsap_flux
+	normkepflux = kepflux/max(kepflux)
+
+	;find the gaps in the data:
+	gaps = ~finite(kepflux)
+	gapnans = where(gaps eq 1)
+
+	;create an array of ones for plotting purposes:
+	gapspots = dblarr(total(gaps)) + median(normkepflux)
+	
+	;define what fraction of transits falling into gaps is acceptable:
+	fracgaps = 0.05
+
+	;figure out which transit elements fall in gaps
+	numInGaps = lowarr * gaps
+
+	;now calculate the actual fraction of transit elements
+	;that fall within the gaps in the data:
+	fracInGaps = total(numInGaps) / total(lowarr)
+	print, 'fracInGaps: ', fracInGaps
+	gaptrial++
+
+endrep until fracInGaps lt fracgaps
 
 ;find the final element of the 1st transit:
 il = 1
@@ -114,9 +151,6 @@ if keyword_set(postplot) then begin
 	ps_close
 endif
 
-kepflux = res.pdcsap_flux
-normkepflux = kepflux/max(kepflux)
-
 if keyword_set(postplot) then begin
 	postname = nextnameeps(plotdir+'JustLC', /nosuf)
 	ps_open, postname, /encaps, /color
@@ -138,9 +172,12 @@ if keyword_set(postplot) then begin
 	ps_close
 endif
 
-kepflux *= nbnndout
+origkepflux = kepflux
+orignormkeplflux = kepflux/median(origkepflux)
 
-normkepflux = kepflux/median(kepflux)
+;inject transit event(s):
+kepflux *= nbnndout
+normkepflux = kepflux/median(origkepflux)
 
 ;stop
 !p.charthick=1
@@ -152,9 +189,15 @@ if keyword_set(postplot) then begin
 endif
 
 timearr = res.time - min(res.time)
+minmaxyra = [0.999*min(normkepflux[where(finite(normkepflux))]), $
+			1.001d*max(normkepflux[where(finite(normkepflux))])]
 plot, timearr, normkepflux, ps=8, /xsty, $
-xtitle = 'Days from Beginning of Quarter', $
-ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d*max(normkepflux)], symsize=0.25
+xtitle = 'Days from Beginning of Segment', $
+ytitle = ' Normalized Flux', /yst, yra=minmaxyra, symsize=0.25, /nodata
+
+oplot, timearr, orignormkeplflux, ps=8, color=120
+oplot, timearr, normkepflux, ps=8, color=0
+
 ;oploterr, timearr, normkepflux, normerr, 3
 oploterr, timearr, normkepflux, normerr, 8
 oplot, timearr, normkepflux, ps=8
@@ -177,6 +220,7 @@ oplot, timearr[lowspots], normkepflux[lowspots], ps=8, col=250
 if keyword_set(postplot) then begin
 	ps_close
 endif
+stop
 
 head0o = head0
 h0el = n_elements(head0)
