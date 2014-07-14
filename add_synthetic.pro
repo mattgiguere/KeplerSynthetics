@@ -151,26 +151,7 @@ if keyword_set(postplot) then begin
 	ps_close
 endif
 
-if keyword_set(postplot) then begin
-	postname = nextnameeps(plotdir+'JustLC', /nosuf)
-	ps_open, postname, /encaps, /color
-endif
-
-timearr = res.time - min(res.time)
-plot, timearr, normkepflux, ps=8, $
-xtitle = 'Days from Beginning of Quarter', $
-ytitle = ' Normalized Flux', /yst, yra=[0.999*min(normkepflux), 1.001d], symsize=0.25, /xsty
-
-normerr = res.pdcsap_flux_err/max(kepflux)
-;oploterr, timearr, normkepflux, normerr, 3
-errplot, timearr, normkepflux - normerr, $
-normkepflux + normerr, color=200
-
-oplot, timearr, normkepflux, ps=8
-
-if keyword_set(postplot) then begin
-	ps_close
-endif
+normerr = res.pdcsap_flux_err/max(kepflux[where(finite(kepflux))])
 
 origkepflux = kepflux
 orignormkeplflux = kepflux/median(origkepflux)
@@ -202,6 +183,8 @@ oplot, timearr, normkepflux, ps=8, color=0
 oploterr, timearr, normkepflux, normerr, 8
 oplot, timearr, normkepflux, ps=8
 
+oplot, timearr[lowspots], normkepflux[lowspots], ps=8, col=250
+
 xyouts, 0.2, 0.2, 'R_st (in R_sun): '+ $
 strt(rst/rsun, f='(F5.2)'), /norm
 
@@ -215,12 +198,10 @@ xyouts, 0.2, 0.11, 'phase: '+ $
 strt(phase, f='(F8.2)'), /norm
 
 
-oplot, timearr[lowspots], normkepflux[lowspots], ps=8, col=250
 
 if keyword_set(postplot) then begin
 	ps_close
 endif
-stop
 
 head0o = head0
 h0el = n_elements(head0)
