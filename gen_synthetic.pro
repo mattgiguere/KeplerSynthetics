@@ -51,8 +51,17 @@ if ~keyword_set(rst) then rst = 1d
 if ~keyword_set(per) then per = 15d
 if ~keyword_set(inc) then inc = 90d
 if ~keyword_set(limbd) then limbd=0.6d
-if ~keyword_set(mpl) then mpl = 1d
-if ~keyword_set(mst) then mst = 1d
+
+
+;adjust mass of planet:
+if ~keyword_set(mpl) then begin
+	;Power law index from Lissauer et al. 2011 ApJ 187, 8
+	mpl = rpl^2.06d
+endif
+
+;roughly based on Gray OASP Book Appendix B:
+if ~keyword_set(mst) then mst = rst
+
 if ~keyword_set(phase) then phase = randomu(seed)
 
 print, 'rpl is: ', rpl
