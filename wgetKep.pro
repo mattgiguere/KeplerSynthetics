@@ -35,6 +35,8 @@
 ;
 ;	will download all files beginning with kplr0089
 ;
+;		KIC: download all files for the given KIC number.
+;
 ;  OUTPUTS:
 ;
 ;  OPTIONAL OUTPUTS:
@@ -55,7 +57,22 @@
 ;-
 pro wgetKep, $
 decade=decade, $
-firstfour=firstfour
+firstfour=firstfour, $
+kic = kic
+
+if keyword_set(kic) then begin
+	kic = strt(kic, f='(I09)')
+	print, 'KIC is: ', kic
+	ff = strmid(kic, 0, 4)
+	spawn, "wget -nH --cut-dirs=5 "+$
+	"--directory-prefix=/raw/kepler/lightcurves/"+ff+"/"+kic+"/"+$
+	" -r -l0 -c -N -np -R 'index*' -erobots=off "+$
+	"http://archive.stsci.edu/pub/kepler/lightcurves/"+ff+"/"+kic+"/"
+	if file_test('/raw/kepler/lightcurves/'+ff+'/'+kic+'/'+kic) then begin
+		spawn, 'rm -rf /raw/kepler/lightcurves/'+ff+'/'+kic+'/'+kic
+	endif
+	
+endif;KW(firstfour)
 
 if keyword_set(firstfour) then begin
 	ff = strt(firstfour, f='(I04)')
@@ -70,7 +87,7 @@ if keyword_set(decade) then begin
 	endfor;cycle through decade
 endif;KW(decade)
 
-if ~keyword_set(decade) and ~keyword_set(firstfour) then begin
+if ~keyword_set(decade) and ~keyword_set(firstfour) and ~keyword_set(kic) then begin
 	print, "WARNING! This takes days to complete!"
 	read, "Are you sure you want to download ALL files (y/n)", ans
 	if ans eq "y" then begin
@@ -78,5 +95,5 @@ if ~keyword_set(decade) and ~keyword_set(firstfour) then begin
 	endif else print, 'Download aborted.'
 endif
 
-stop
+;stop
 end;wgetKep.pro
