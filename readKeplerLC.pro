@@ -21,6 +21,10 @@
 ;
 ;  OUTPUTS:
 ;	RES: A structure containing the following 20 tags:
+;
+;  OPTIONAL OUTPUTS:
+;		RES0: Optional keyword output of the 0th extension information.
+;
 ; This information is from the Kepler Data Archive Site:
 ;http://archive.stsci.edu/kepler/manuals/ArchiveManualNewFormat.pdf
 ;
@@ -73,7 +77,8 @@ postplot = postplot, $
 fname = fname, $
 header = header, $
 head0 = head0, $
-noplot = noplot
+noplot = noplot, $
+res0 = res0
 
 angstrom = '!6!sA!r!u!9 %!6!n'
 !p.color=0
