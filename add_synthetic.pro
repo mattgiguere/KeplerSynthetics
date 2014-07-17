@@ -43,7 +43,7 @@ RSUN = 6.955d8 ;meters
 loadct, 39, /silent
 plotdir = '/raw/kepler/synplots/'
 
-res = readKeplerLC(fname=fname, header=header, head0=head0, /noplot)
+res = readKeplerLC(fname=fname, header=header, head0=head0, /noplot, res0=res0)
 nelres = n_elements(res)
 print, '# el in res is: ', nelres
 
@@ -216,6 +216,11 @@ fnamenofits = strmid(fnamend, 0, strlen(fnamend)-5)
 fdir = '/raw/kepler/synthetics/'
 fitsnm = nextname(fdir+'synthetic','.fits')
 
+;now overwrite the pdcsap_flux and pdcsap_flux_err with the 
+;synthetic information:
+res.pdcsap_flux = normkepflux
+res.pdcsap_flux_err = normerr
+
 fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
 fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
 fxaddpar, head0, 'PLPER', strt(per, f='(F10.3)'), 'Synthetic planet period (days)'
@@ -223,6 +228,6 @@ fxaddpar, head0, 'PLPHASE', strt(phase, f='(F10.4)'), 'Transit phase'
 fxaddpar, head0, 'TRANELS', strt(beglow)+':'+strt(endlow), 'Elements with 1st transit event'
 				
 mwrfits, res0, fitsnm, head0, /create
-mwrfits, synth_struct, fitsnm, header
+mwrfits, res, fitsnm, header
 
 end add_synthetic.pro
