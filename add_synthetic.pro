@@ -48,13 +48,27 @@ nelres = n_elements(res)
 print, '# el in res is: ', nelres
 
 rpl_init = rpl
-rst = sxpar(head0, 'RADIUS')
+if ~keyword_set(rst) then begin
+    rst = sxpar(head0, 'RADIUS')
+endif else begin
+	print, 'R STAR WAS INPUT. THE VALUE BEING USED IS: '
+	print, rst, 'R_SUN.'
+endelse
+
 print, 'rst is: ', rst
-print, 'phase is: ', phase
+if keyword_set(phase) then print, 'phase is: ', phase
 rndmamp = max(res.time) - min(res.time) - 30d
 res_original = res
 rpl_original = rpl
 rst_original = rst
+
+
+;This section of code (the repeat begin...endrep until loop)
+;will handle problems due to synthetic transits falling 
+;within gaps. 
+
+;define what fraction of transits falling into gaps is acceptable:
+fracgaps = 0.3
 
 gaptrial = 0
 repeat begin
@@ -112,9 +126,6 @@ repeat begin
 	;create an array of ones for plotting purposes:
 	gapspots = dblarr(total(gaps)) + median(normkepflux)
 	
-	;define what fraction of transits falling into gaps is acceptable:
-	fracgaps = 0.05
-
 	;figure out which transit elements fall in gaps
 	numInGaps = lowarr * gaps
 
