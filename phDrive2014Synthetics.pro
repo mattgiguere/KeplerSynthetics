@@ -58,7 +58,7 @@ kepmag, $
 for i=0, n_elements(per_d)-1 do begin
 	print, '*****************************************'
 	print, 'Element ', i, ' of ', n_elements(per_d), '. ', $
-		str(i/n_elements(per_d)*1d2, format='(F6.2)'), '% complete.'
+		strt(i/n_elements(per_d)*1d2, f='(F6.2)'), '% complete.'
 	print, '*****************************************'
 	rst = rstarr[i]
 	print, 'R star input: ', rst
