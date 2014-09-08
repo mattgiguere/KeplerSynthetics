@@ -147,7 +147,15 @@ start=phase*psecs/60d
 
 ;now loop over adding repeated transit events:
 while start lt nelwhole do begin
-  flux[start:(start + neltrnst-1)] *= trnstcrv
+	;make sure we're not indexing beyond the last element of flux:
+	if ((start + neltrnst -1) lt n_elements(flux)) then begin
+		flux[start:(start + neltrnst-1)] *= trnstcrv
+	endif else begin
+		;if we're not capturing egress completely, handle it:
+		lenfx = n_elements(flux)
+		trnstlen = lenfx - start
+		flux[start:*] *= trnstcrv[0:trnstlen]
+	endelse
   start += psecs/60d
 endwhile
 
