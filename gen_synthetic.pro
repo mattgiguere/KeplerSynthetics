@@ -124,7 +124,7 @@ print, 'the complete duration is: ', t_com/3600d
 
 neltr = round(t_tot/60d)
 nelwing = round((t_tot - t_com)/2d / 60d)
-leftwing=1d -  depth*dindgen(nelwing+1d)/nelwing
+leftwing= 1d -  depth*dindgen(nelwing+1d)/nelwing
 rightwing = (1d - depth) + depth*dindgen(nelwing+1d)/nelwing
 trnstcrv = [leftwing, dblarr(t_com/60) + (1d - depth), rightwing]
 neltrnst = n_elements(trnstcrv)
