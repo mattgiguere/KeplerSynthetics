@@ -94,6 +94,11 @@ repeat begin
 	;the time (in minutes) between observations:
 	timestep = (max(res.time) - min(res.time))/nelres * 24d * 60d
 
+	;Set the phase to zero. This will make gen_synthetic randomly
+	;set the phase, yet still allow it to be extracted for 
+	;superimposing on the plot and saving to the FITS header.
+	phase = 0
+	
 	;Generate the synthetic transit using GEN_SYNTHETIC.PRO:
 	gen_synthetic, $
 	rpl=rpl, $
@@ -149,7 +154,7 @@ endlow = lowspots[il-1L]
 if keyword_set(postplot) then begin
 	!p.charthick=3
 	!p.thick=3
-	postnamesyn = nextnameeps(plotdir+'JustSynthetics', /nosuf)
+	postnamesyn = nextnameeps(plotdir+'JustSynthetics', /nosuf, /silent)
 	ps_open, postnamesyn, /encaps, /col
 endif
 plot, res.time, nbnndout, $
@@ -176,7 +181,7 @@ normkepflux = kepflux/median(origkepflux)
 !p.thick=1
 
 if keyword_set(postplot) then begin
-	postname = nextnameeps(plotdir+'SyntheticsAndLC', /nosuf)
+	postname = nextnameeps(plotdir+'SyntheticsAndLC', /nosuf, /silent)
 	ps_open, postname, /encaps, /color
 endif
 
@@ -205,8 +210,10 @@ strt(rpl/REARTH, f='(F4.1)'), /norm
 xyouts, 0.2, 0.14, 'period (days): '+ $
 strt(per, f='(F8.2)'), /norm
 
+if keyword_set(phase) then begin
 xyouts, 0.2, 0.11, 'phase: '+ $
 strt(phase, f='(F8.2)'), /norm
+endif
 
 
 
