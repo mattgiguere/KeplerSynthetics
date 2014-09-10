@@ -148,8 +148,7 @@ while (il lt n_elements(lowspots)-1) and (lowspots[il]-1L eq lowspots[il-1]) do 
 il++
 endwhile
 print, 'lowspots[il]: ', lowspots[il]
-print, 'lowspots[il-1L]: ', lowspots[il-1L]
-endlow = lowspots[il-1L]
+endlow = lowspots[il]
 
 if keyword_set(postplot) then begin
 	!p.charthick=3
