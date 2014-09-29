@@ -7,7 +7,7 @@
 ;   
 ;
 ;  CATEGORY:
-;      CHIRON
+;      Planethunters
 ;
 ;  CALLING SEQUENCE:
 ;
