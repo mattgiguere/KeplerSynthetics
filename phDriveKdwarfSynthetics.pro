@@ -40,36 +40,38 @@ angstrom = '!6!sA!r!u!9 %!6!n'
 loadct, 39, /silent
 usersymbol, 'circle', /fill, size_of_sym = 0.5
 
-if keyword_set(help) then begin
-	print, '*************************************************'
-	print, '*************************************************'
-	print, '        HELP INFORMATION FOR phDriveKdwarfSynthetics'
-	print, 'KEYWORDS: '
-	print, ''
-	print, 'HELP: Use this keyword to print all available arguments'
-	print, ''
-	print, ''
-	print, ''
-	print, '*************************************************'
-	print, '                     EXAMPLE                     '
-	print, "IDL>"
-	print, 'IDL> '
-	print, '*************************************************'
-	stop
-endif
+rsun = 6.955d8
 
+readcol, '/raw/kepler/KdwarfSynthetics/kdwarffakes.txt', $
+kepid, $
+filenm, $
+ijnk, jjnk, kjnk, ljnk, $
+per_d, $
+rpl_e, $
+rstarr, $
+kepmag, $
+	format='L, A, L, L, L, L, D, D, D, D', delim=' ', skipline=1
 
+;stop
+for i=0, n_elements(per_d)-1 do begin
+	print, '*****************************************'
+	print, 'Element ', i, ' of ', n_elements(per_d), '. ', $
+		strt(i/n_elements(per_d)*1d2, f='(F6.2)'), '% complete.'
+	print, '*****************************************'
+	rst = rstarr[i]
+	print, 'R star input: ', rst
+	
+	add_synthetic, fname=filenm[i], $
+	rpl=rpl_e[i], per=per_d[i], $
+	rst=rst, postplot=postplot
+	
+	print, 'R star returned is: ', rst
+	rstarr[i] = rst
+endfor
 
-stop
-if keyword_set(postplot) then begin
-   fn = nextnameeps('plot')
-   thick, 2
-   ps_open, fn, /encaps, /color
-endif
-
-if keyword_set(postplot) then begin
-   ps_close
-endif
+for i=0, n_elements(phase)-1 do begin
+	print, filenm[i], rpl_e[i], per_d[i], phase[i], rstarr[i]/rsun
+endfor
 
 stop
 end;phDriveKdwarfSynthetics.pro
