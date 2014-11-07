@@ -240,6 +240,7 @@ res.pdcsap_flux_err = normerr
 
 fxaddpar, head0, 'SYNTHTIC', 'TRUE', 'A synthetic planet has been added'
 fxaddpar, head0, 'PLRAD', strt(rpl_init, f='(F8.3)'), 'Synthetic planet radius (R_EARTH)'
+fxaddpar, head0, 'RSTUPDT', strt(rst_original, f='(F8.3)'), 'Updated stellar radius (R_SUN)'
 fxaddpar, head0, 'PLPER', strt(per, f='(F10.3)'), 'Synthetic planet period (days)'
 fxaddpar, head0, 'PLPHASE', strt(phase, f='(F10.4)'), 'Transit phase'
 fxaddpar, head0, 'TRANELS', strt(beglow)+':'+strt(endlow), 'Elements with 1st transit event'
